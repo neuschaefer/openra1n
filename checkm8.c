@@ -716,7 +716,7 @@ bool checkm8_boot_pongo(usb_handle_t *handle)
     void *shellcode = malloc(512);
     memcpy(shellcode, payloads_lz4dec_bin, payloads_lz4dec_bin_len);
     size_t out_len = payloads_Pongo_bin_len;
-    void *out = malloc(out_len);
+    uint8_t *out = malloc(out_len);
     compress_pongo(out, &out_len);
     LOG_DEBUG("Compressed pongoOS from %u to %zu bytes", payloads_Pongo_bin_len, out_len);
     void *tmp = malloc(out_len + 512);
@@ -742,7 +742,7 @@ bool checkm8_boot_pongo(usb_handle_t *handle)
         {
         retry:
             size = ((out_len - len) > 0x800) ? 0x800 : (out_len - len);
-            send_usb_control_request(handle, 0x21, DFU_DNLOAD, 0, 0, (unsigned char*)&out[len], size, &transfer_ret);
+            send_usb_control_request(handle, 0x21, DFU_DNLOAD, 0, 0, &out[len], size, &transfer_ret);
             if(transfer_ret.ret == USB_TRANSFER_TIMEOUT)
             {
                 LOG_DEBUG("retrying at len = %zu", len);
