@@ -377,7 +377,7 @@ static bool checkm8_stage_spray(const usb_handle_t *handle)
 {
     size_t i;
     
-    if(cpid == 0x7001 || cpid == 0x7000 || cpid == 0x7002 || cpid == 0x8003 || cpid == 0x8000)
+    if(cpid == 0x7001 || cpid == 0x7000 || cpid == 0x8003 || cpid == 0x8000)
     {
         while(!checkm8_usb_request_stall(handle) || !checkm8_usb_request_leak(handle) || !checkm8_no_leak(handle)) {}
     }
