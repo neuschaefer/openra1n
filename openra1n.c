@@ -23,13 +23,12 @@
 int main(int argc, char **argv)
 {
     LOG_RAINBOW("-=-=- openra1n -=-=-");
-    int ret = EXIT_FAILURE;
     usb_handle_t handle;
     usb_timeout = 5;
     usb_abort_timeout_min = 0;
     LOG_INFO("Waiting for DFU mode device");
-    checkm8(&handle);
+    if (!checkm8(&handle)) return EXIT_FAILURE;
     sleep_ms(3000);
-    checkm8_boot_pongo(&handle);
-    return ret;
+    if (!checkm8_boot_pongo(&handle)) return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
