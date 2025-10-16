@@ -582,7 +582,7 @@ fail:
 static bool checkm8_stage_patch(const usb_handle_t *handle)
 {
     size_t i, data_sz, packet_sz;
-    uint8_t *data;
+    uint8_t *data = NULL;
     transfer_ret_t transfer_ret;
     bool ret = false;
     
