@@ -2,6 +2,7 @@ CFLAGS = -I./include -Wall -Wno-pointer-sign
 CFLAGS += -Os
 BIN = openra1n
 SOURCE = openra1n.c common.c checkm8.c usb.c usb_iokit.c usb_libusb.c lz4/lz4.c lz4/lz4hc.c
+OBJECTS = $(subst .c,.o,$(SOURCE))
 ifeq ($(LIBUSB),1)
 	CC = gcc
 	CFLAGS += -DHAVE_LIBUSB
@@ -23,12 +24,18 @@ payloads:
 		xxd -i $$file > include/$$file.h; \
 	done
 
-openra1n: payloads
-	@echo " CC     $(BIN)"
-	@$(CC) $(CFLAGS) $(SOURCE) $(LDFLAGS) -o $(BIN)
+%.o: %.c | payloads
+	@echo " CC     $@"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+openra1n: $(OBJECTS)
+	@echo " LD     $(BIN)"
+	@$(CC) $(OBJECTS) $(LDFLAGS) -o $(BIN)
 	strip $(BIN)
 
 clean:
+	@echo " CLEAN  $(OBJECTS)"
+	@rm -f $(OBJECTS)
 	@echo " CLEAN  $(BIN)"
 	@rm -f $(BIN)
 	@echo " CLEAN  include/payloads"
