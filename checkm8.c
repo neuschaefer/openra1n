@@ -6,19 +6,6 @@
 #include <lz4/lz4.h>
 #include <lz4/lz4hc.h>
 
-#include <payloads/s8000.bin.h>
-#include <payloads/s8001.bin.h>
-#include <payloads/s8003.bin.h>
-#include <payloads/t7000.bin.h>
-#include <payloads/t7001.bin.h>
-#include <payloads/t8010.bin.h>
-#include <payloads/t8011.bin.h>
-#include <payloads/t8012.bin.h>
-#include <payloads/t8015.bin.h>
-
-#include <payloads/Pongo.bin.h>
-#include <payloads/lz4dec.bin.h>
-
 #define ARM_16K_TT_L2_SHIFT      25                    /* page descriptor shift */
 
 extern uint8_t payloads_s8000_bin[], payloads_s8001_bin[], payloads_s8003_bin[], payloads_t7000_bin[], payloads_t7001_bin[], payloads_t8010_bin[], payloads_t8011_bin[], payloads_t8012_bin[], payloads_t8015_bin[];
