@@ -20,9 +20,55 @@
 
 #include <common/log.h>
 
+#include <unistd.h>
+
+struct args {
+    const char *pongo_path;
+};
+
+static void usage(const char *argv0)
+{
+    printf("Usage: %s [OPTIONS]\n\n", argv0);
+
+    printf("  -h         Print this help message\n");
+    printf("  -k FILE    Use an alternative Pongo.bin file\n");
+}
+
+static bool parse_args(struct args *args, int argc, char **argv)
+{
+    while (1) {
+        int c = getopt(argc, argv, "hk:EdpvnR");
+
+        switch(c) {
+        case 'h':
+            usage(argv[0]);
+            exit(EXIT_SUCCESS);
+        case 'k':
+            args->pongo_path = optarg;
+            break;
+        case 'E': // exit after uploading pongoOS
+        case 'd': // demote
+        case 'p': // boot to pongo shell
+        case 'v': // verbose
+        case 'n': // no colors
+        case 'R': // ???
+            LOG_INFO("Option -%c not implemented", c);
+            break;
+        case -1:
+            return true;
+        case '?':
+            usage(argv[0]);
+            return false;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     LOG_RAINBOW("-=-=- openra1n -=-=-");
+    struct args args = {};
+    if (!parse_args(&args, argc, argv)) return EXIT_FAILURE;
+    if (!checkm8_select_pongo(args.pongo_path)) return EXIT_FAILURE;
     usb_handle_t handle;
     usb_timeout = 5;
     usb_abort_timeout_min = 0;

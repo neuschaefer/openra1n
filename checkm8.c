@@ -6,6 +6,10 @@
 #include <lz4/lz4.h>
 #include <lz4/lz4hc.h>
 
+#include <errno.h>
+#include <stdio.h>
+#include <sys/stat.h>
+
 #define ARM_16K_TT_L2_SHIFT      25                    /* page descriptor shift */
 
 extern uint8_t payloads_s8000_bin[], payloads_s8001_bin[], payloads_s8003_bin[], payloads_t7000_bin[], payloads_t7001_bin[], payloads_t8010_bin[], payloads_t8011_bin[], payloads_t8012_bin[], payloads_t8015_bin[];
@@ -13,6 +17,9 @@ extern unsigned payloads_s8000_bin_len, payloads_s8001_bin_len, payloads_s8003_b
 
 extern uint8_t payloads_Pongo_bin[], payloads_lz4dec_bin[];
 extern unsigned payloads_Pongo_bin_len, payloads_lz4dec_bin_len;
+
+static uint8_t *pongo_bin;
+static size_t pongo_bin_len;
 
 static uint16_t cpid;
 static const char *pwnd_str = " YOLO:checkra1n";
@@ -686,12 +693,58 @@ static bool checkm8_stage_patch(const usb_handle_t *handle)
     return false;
 }
 
+bool checkm8_select_pongo(const char *path)
+{
+    if (path) {
+        struct stat st;
+        int ret = stat(path, &st);
+
+        if (ret < 0) {
+            LOG_ERROR("Failed to stat %s: %s", path, strerror(errno));
+            return false;
+        }
+
+        size_t size = st.st_size;
+        pongo_bin_len = size;
+        pongo_bin = malloc(size);
+
+        if (pongo_bin == NULL) {
+            LOG_ERROR("Failed to allocate memory (%zu bytes) for %s", size, path);
+            return false;
+        }
+
+        FILE *f = fopen(path, "rb");
+
+        if (f == NULL) {
+            LOG_ERROR("Failed to open %s for reading: %s", path, strerror(errno));
+            return false;
+        }
+
+        size_t bytes_read = fread(pongo_bin, 1, size, f);
+
+        if (bytes_read < size) {
+            LOG_ERROR("Failed to read from %s: %s", path, strerror(errno));
+            return false;
+        }
+
+        fclose(f);
+        return true;
+    } else if (payloads_Pongo_bin_len > 0) {
+        pongo_bin_len = payloads_Pongo_bin_len;
+        pongo_bin = payloads_Pongo_bin;
+        return true;
+    } else {
+        LOG_ERROR("No built-in Pongo.bin. Please specify one on the command line.");
+        return false;
+    }
+}
+
 static void compress_pongo(void *out,
                            size_t *out_len)
 {
-    size_t len = payloads_Pongo_bin_len;
+    size_t len = pongo_bin_len;
     size_t out_len_ = *out_len;
-    *out_len = LZ4_compress_HC(payloads_Pongo_bin, out, len, out_len_, LZ4HC_CLEVEL_MAX);
+    *out_len = LZ4_compress_HC(pongo_bin, out, len, out_len_, LZ4HC_CLEVEL_MAX);
 }
 
 bool checkm8_boot_pongo(usb_handle_t *handle)
@@ -702,10 +755,10 @@ bool checkm8_boot_pongo(usb_handle_t *handle)
     LOG_DEBUG("Appending shellcode to the top of pongoOS (512 bytes)");
     void *shellcode = malloc(512);
     memcpy(shellcode, payloads_lz4dec_bin, payloads_lz4dec_bin_len);
-    size_t out_len = payloads_Pongo_bin_len;
+    size_t out_len = pongo_bin_len;
     uint8_t *out = malloc(out_len);
     compress_pongo(out, &out_len);
-    LOG_DEBUG("Compressed pongoOS from %u to %zu bytes", payloads_Pongo_bin_len, out_len);
+    LOG_DEBUG("Compressed pongoOS from %u to %zu bytes", pongo_bin_len, out_len);
     void *tmp = malloc(out_len + 512);
     memcpy(tmp, shellcode, 512);
     memcpy(tmp + 512, out, out_len);
